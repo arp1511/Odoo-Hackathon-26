@@ -67,7 +67,7 @@ export default function ReportsPage() {
     if (tab === 'fuel') {
       const chartD = currentData.map((d, i) => ({
         name: d.registrationNumber ?? `V${i+1}`,
-        efficiency: Number(d.fuelEfficiency ?? 0).toFixed(2),
+        efficiency: Number(Number(d.efficiency ?? 0).toFixed(2)),
       }));
       return (
         <ResponsiveContainer width="100%" height={320}>
@@ -109,7 +109,7 @@ export default function ReportsPage() {
     if (tab === 'roi') {
       const chartD = currentData.map((d, i) => ({
         name: d.registrationNumber ?? `V${i+1}`,
-        roi: Number(d.roi ?? 0).toFixed(4),
+        roi: Number(Number(d.roi ?? 0).toFixed(4)),
       }));
       return (
         <ResponsiveContainer width="100%" height={320}>
