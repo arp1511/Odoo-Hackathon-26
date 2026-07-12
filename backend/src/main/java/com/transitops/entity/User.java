@@ -31,6 +31,12 @@ public class User {
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE"; // 'ACTIVE','INACTIVE'
 
+    @Column(name = "failed_login_attempts")
+    private Integer failedLoginAttempts = 0;
+
+    @Column(name = "locked_until")
+    private Instant lockedUntil;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false, nullable = false)
     private Instant createdAt;

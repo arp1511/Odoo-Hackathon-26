@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import AppLayout from './components/AppLayout';
 import LoginPage       from './pages/LoginPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import DashboardPage   from './pages/DashboardPage';
 import VehiclesPage    from './pages/VehiclesPage';
 import DriversPage     from './pages/DriversPage';
@@ -21,6 +22,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <LoginPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard"   element={<DashboardPage />} />
