@@ -34,7 +34,7 @@ public class TripController {
     @GetMapping
     public Page<TripDto> getAllTrips(
             @RequestParam(required = false) TripStatus status,
-            Pageable pageable) {
+            @org.springframework.data.web.PageableDefault(sort = "createdAt", direction = org.springframework.data.domain.Sort.Direction.DESC) Pageable pageable) {
         return tripService.getAllTrips(status, pageable);
     }
 

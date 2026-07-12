@@ -72,6 +72,7 @@ export default function TripsPage() {
       await tripsApi.dispatch(trip.id);
       toast.success('Trip dispatched!');
       load();
+      loadResources();
     } catch (e) {
       toast.error(e?.response?.data?.message || 'Dispatch failed');
     }
