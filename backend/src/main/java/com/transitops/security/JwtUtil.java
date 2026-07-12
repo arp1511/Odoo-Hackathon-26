@@ -17,7 +17,8 @@ import java.util.function.Function;
 @Component
 public class JwtUtil {
 
-    // Hardcoded secret for hackathon simplicity, though ideally should be injected via @Value
+    // Hardcoded secret for hackathon simplicity, though ideally should be injected
+    // via @Value
     private final String SECRET_KEY = "TransitOpsHackathonSuperSecretKeyForJwtAuthenticationTransitOps";
 
     private SecretKey getSigningKey() {

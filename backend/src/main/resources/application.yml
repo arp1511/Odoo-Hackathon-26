@@ -7,8 +7,7 @@ spring:
     hibernate:
       ddl-auto: validate   # NEVER 'update' — Flyway owns schema, not Hibernate
     properties:
-      hibernate:
-        format_sql: true
+      "[hibernate.format_sql]": true
   flyway:
     enabled: true
     locations: classpath:db/migration
