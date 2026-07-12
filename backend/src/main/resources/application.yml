@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:postgresql://aws-0-ap-northeast-1.pooler.supabase.com:6543/postgres?prepareThreshold=0}
+    username: ${DB_USER:postgres.gskhtnwvfrszxiwxxtzq}
+    password: ${DB_PASSWORD:@Arpita1511}
   jpa:
     hibernate:
       ddl-auto: validate   # NEVER 'update' — Flyway owns schema, not Hibernate
@@ -12,10 +12,10 @@ spring:
     enabled: false
 
   mail:
-    host: ${SPRING_MAIL_HOST}
-    port: ${SPRING_MAIL_PORT}
-    username: ${SPRING_MAIL_USERNAME}
-    password: ${SPRING_MAIL_PASSWORD}
+    host: ${SPRING_MAIL_HOST:smtp.gmail.com}
+    port: ${SPRING_MAIL_PORT:587}
+    username: ${SPRING_MAIL_USERNAME:sonawanemanav0@gmail.com}
+    password: ${SPRING_MAIL_PASSWORD:tp0@mail}
     properties:
       mail:
         smtp:
