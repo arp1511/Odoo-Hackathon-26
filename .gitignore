@@ -49,6 +49,4 @@ ehthumbs.db
 Thumbs.db
 
 # Sensitive credentials and config
-backend/src/main/resources/application.yml
-application.yml
 .env
