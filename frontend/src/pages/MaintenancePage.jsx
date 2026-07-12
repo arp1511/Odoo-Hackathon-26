@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { maintenanceApi, vehiclesApi } from '../api/services';
 import { useAuth } from '../context/AuthContext';
-import { Spinner, EmptyState, StatusBadge, Modal } from '../components/ui';
-import { Plus, Search, CheckCircle } from 'lucide-react';
+import { Spinner } from '../components/ui';
 import toast from 'react-hot-toast';
+import { CheckCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
 const EMPTY_FORM = { vehicleId: '', description: '', cost: '' };
@@ -14,204 +14,176 @@ export default function MaintenancePage() {
 
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('');
-  const [search, setSearch] = useState('');
-  const [showCreate, setShowCreate] = useState(false);
+  
   const [form, setForm] = useState(EMPTY_FORM);
   const [vehicles, setVehicles] = useState([]);
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(() => {
     setLoading(true);
-    maintenanceApi.list(statusFilter ? { status: statusFilter } : {})
+    maintenanceApi.list({})
       .then((r) => setLogs(r.data?.content ?? r.data ?? []))
       .catch(() => toast.error('Failed to load maintenance logs'))
       .finally(() => setLoading(false));
-  }, [statusFilter]);
+  }, []);
 
-  useEffect(() => { load(); }, [load]);
+  const loadVehicles = useCallback(() => {
+    if (!isManager) return;
+    vehiclesApi.list()
+      .then((r) => setVehicles(r.data?.content ?? r.data ?? []))
+      .catch(() => {});
+  }, [isManager]);
 
-  const openCreate = async () => {
-    setForm(EMPTY_FORM);
-    try {
-      const r = await vehiclesApi.list();
-      setVehicles(r.data?.content ?? r.data ?? []);
-    } catch { }
-    setShowCreate(true);
-  };
+  useEffect(() => { load(); loadVehicles(); }, [load, loadVehicles]);
 
-  const create = async () => {
+  const createLog = async () => {
     if (!form.vehicleId || !form.description) { toast.error('Fill required fields'); return; }
     setSaving(true);
     try {
       await maintenanceApi.create(form);
       toast.success('Maintenance log created — vehicle set to IN_SHOP');
-      setShowCreate(false);
+      setForm(EMPTY_FORM);
       load();
     } catch (e) {
-      toast.error(e?.response?.data?.message || 'Failed to create');
+      toast.error(e?.response?.data?.message || 'Failed to create log');
     } finally { setSaving(false); }
   };
 
-  const close = async (log) => {
+  const closeLog = async (log) => {
     try {
       await maintenanceApi.close(log.id);
       toast.success('Maintenance closed — vehicle restored to AVAILABLE');
       load();
     } catch (e) {
-      toast.error(e?.response?.data?.message || 'Failed to close');
+      toast.error(e?.response?.data?.message || 'Failed to close log');
     }
   };
 
-  const filtered = logs.filter((l) => {
-    const q = search.toLowerCase();
-    return !q || l.description?.toLowerCase().includes(q) || l.vehicleRegistrationNumber?.toLowerCase().includes(q);
-  });
-
   const f = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-  const totalCost = filtered.reduce((s, l) => s + Number(l.cost || 0), 0);
-  const openCount = filtered.filter((l) => l.status === 'OPEN').length;
+  const getStatusColor = (status) => {
+    return status === 'OPEN' ? 'var(--color-warning)' : 'var(--color-secondary)';
+  };
 
   return (
-    <>
-      <div className="topbar">
-        <div>
-          <div className="topbar-title">Maintenance</div>
-          <div className="topbar-subtitle">Vehicle maintenance tracking</div>
-        </div>
-        <div className="topbar-actions">
-          {isManager && (
-            <button className="btn btn-primary" onClick={openCreate}>
-              <Plus size={14} /> Log Maintenance
-            </button>
-          )}
-        </div>
+    <div style={{ padding: '2rem', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      
+      <div style={{ marginBottom: '2rem' }}>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--text-main)' }}>Maintenance</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Vehicle maintenance tracking.</p>
       </div>
 
-      <div className="page-body">
-        {/* Summary */}
-        <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
-          <div className="kpi-card" style={{ flex: 1 }}>
-            <div className="kpi-label">Open Issues</div>
-            <div className="kpi-value" style={{ color: 'var(--warning)', fontSize: 22 }}>{openCount}</div>
-          </div>
-          <div className="kpi-card" style={{ flex: 1 }}>
-            <div className="kpi-label">Total Cost (shown)</div>
-            <div className="kpi-value" style={{ color: 'var(--danger)', fontSize: 22 }}>
-              ₹{totalCost.toLocaleString()}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem', flex: 1, overflow: 'hidden' }}>
+        
+        {/* LEFT COLUMN: CREATE LOG FORM */}
+        {isManager ? (
+          <div className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', overflowY: 'auto' }}>
+            <h3 style={{ marginBottom: '1.5rem', color: 'var(--text-main)', fontSize: '1.1rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Log Service Record</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Vehicle</label>
+                <select className="input-field" value={form.vehicleId} onChange={f('vehicleId')} style={{ cursor: 'pointer' }}>
+                  <option value="" style={{ background: 'var(--bg-dark)' }}>Select vehicle…</option>
+                  {vehicles.map((v) => (
+                    <option key={v.id} value={v.id} style={{ background: 'var(--bg-dark)' }}>{v.registrationNumber}</option>
+                  ))}
+                </select>
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Service Type / Description</label>
+                <input className="input-field" value={form.description} onChange={f('description')} placeholder="Oil Change" />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Cost (₹)</label>
+                <input className="input-field" type="number" value={form.cost} onChange={f('cost')} placeholder="2500" />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)' }}>Date</label>
+                <input className="input-field" type="text" value={format(new Date(), 'dd/MM/yyyy')} disabled style={{ opacity: 0.7 }} />
+              </div>
+
+              <button className="btn btn-primary" onClick={createLog} disabled={saving} style={{ padding: '1rem', marginTop: '1rem' }}>
+                {saving ? 'Saving…' : 'Save'}
+              </button>
+              
+              <div style={{ marginTop: '2rem', display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-secondary)' }}>Available</span>
+                  <span style={{ color: 'var(--text-muted)' }}>---- creating active record ----&gt;</span>
+                  <span style={{ color: 'var(--color-warning)' }}>In Shop</span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'var(--color-warning)' }}>In Shop</span>
+                  <span style={{ color: 'var(--text-muted)' }}>---- closing record (not retired) ----&gt;</span>
+                  <span style={{ color: 'var(--color-secondary)' }}>Available</span>
+                </div>
+                <div style={{ color: 'var(--color-warning)', marginTop: '0.5rem' }}>
+                  Note: In Shop vehicles are removed from the dispatch pool.
+                </div>
+              </div>
             </div>
           </div>
-          <div className="kpi-card" style={{ flex: 1 }}>
-            <div className="kpi-label">Total Logs</div>
-            <div className="kpi-value" style={{ fontSize: 22 }}>{filtered.length}</div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="filter-bar">
-          <div className="search-input-wrap">
-            <Search className="search-icon" />
-            <input className="search-input" placeholder="Search description…" value={search}
-              onChange={(e) => setSearch(e.target.value)} />
-          </div>
-          <select className="form-control" style={{ width: 140 }} value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="">All</option>
-            <option value="OPEN">OPEN</option>
-            <option value="CLOSED">CLOSED</option>
-          </select>
-        </div>
-
-        {loading ? <Spinner /> : filtered.length === 0 ? (
-          <EmptyState icon="🔧" title="No maintenance logs" sub="Log maintenance when a vehicle needs servicing"
-            action={isManager && <button className="btn btn-primary" onClick={openCreate}><Plus size={14}/> Log Maintenance</button>} />
         ) : (
-          <div className="table-wrapper">
-            <table>
-              <thead>
-                <tr>
-                  <th>Vehicle</th>
-                  <th>Description</th>
-                  <th>Cost</th>
-                  <th>Status</th>
-                  <th>Opened</th>
-                  <th>Closed</th>
-                  {isManager && <th>Actions</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((l) => (
-                  <tr key={l.id}>
-                    <td style={{ fontFamily: 'monospace', color: 'var(--accent)', fontWeight: 600 }}>
-                      {l.vehicleRegistrationNumber ?? l.vehicleId}
-                    </td>
-                    <td style={{ maxWidth: 280, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {l.description}
-                    </td>
-                    <td style={{ fontWeight: 600, color: 'var(--danger)' }}>
-                      ₹{Number(l.cost || 0).toLocaleString()}
-                    </td>
-                    <td><StatusBadge status={l.status} /></td>
-                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                      {l.createdAt ? format(new Date(l.createdAt), 'dd MMM yyyy') : '—'}
-                    </td>
-                    <td style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                      {l.closedAt ? format(new Date(l.closedAt), 'dd MMM yyyy') : '—'}
-                    </td>
-                    {isManager && (
-                      <td>
-                        {l.status === 'OPEN' && (
-                          <button className="btn btn-sm btn-success" onClick={() => close(l)}>
-                            <CheckCircle size={11}/> Close
-                          </button>
-                        )}
-                      </td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="glass-panel" style={{ padding: '2rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)' }}>
+            You do not have permission to log maintenance.
           </div>
         )}
-      </div>
 
-      {showCreate && (
-        <Modal
-          title="Log Maintenance"
-          onClose={() => setShowCreate(false)}
-          footer={
-            <>
-              <button className="btn btn-secondary" onClick={() => setShowCreate(false)}>Cancel</button>
-              <button className="btn btn-primary" onClick={create} disabled={saving}>
-                {saving ? 'Saving…' : 'Create Log'}
-              </button>
-            </>
-          }
-        >
-          <div className="form-group">
-            <label className="form-label">Vehicle *</label>
-            <select className="form-control" value={form.vehicleId} onChange={f('vehicleId')}>
-              <option value="">Select vehicle…</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>{v.registrationNumber} — {v.name} ({v.status})</option>
-              ))}
-            </select>
-          </div>
-          <div className="form-group" style={{ marginTop: 14 }}>
-            <label className="form-label">Description *</label>
-            <textarea className="form-control" rows={3} value={form.description} onChange={f('description')}
-              placeholder="Engine oil change, brake pad replacement…" />
-          </div>
-          <div className="form-group" style={{ marginTop: 14 }}>
-            <label className="form-label">Estimated Cost (₹)</label>
-            <input className="form-control" type="number" value={form.cost} onChange={f('cost')} placeholder="5000" />
-          </div>
-          <div className="alert alert-warning" style={{ marginTop: 14, fontSize: 12 }}>
-            ⚠ Creating a maintenance log will automatically set the vehicle status to IN_SHOP.
-          </div>
-        </Modal>
-      )}
-    </>
+        {/* RIGHT COLUMN: SERVICE LOGS */}
+        <div className="glass-panel" style={{ padding: '2rem', display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'rgba(0,0,0,0.2)' }}>
+          <h3 style={{ marginBottom: '1.5rem', color: 'var(--text-main)', fontSize: '1.1rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Service Logs</h3>
+          
+          {loading ? <Spinner /> : logs.length === 0 ? (
+            <div style={{ color: 'var(--text-muted)', textAlign: 'center', marginTop: '2rem' }}>No service logs found.</div>
+          ) : (
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid var(--border-light)', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <th style={{ padding: '1rem' }}>Vehicle</th>
+                    <th style={{ padding: '1rem' }}>Service</th>
+                    <th style={{ padding: '1rem' }}>Cost</th>
+                    <th style={{ padding: '1rem' }}>Status</th>
+                    {isManager && <th style={{ padding: '1rem' }}>Action</th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {logs.map((l) => (
+                    <tr key={l.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
+                      <td style={{ padding: '1rem', color: 'var(--color-primary)', fontWeight: 600 }}>{l.vehicleRegistrationNumber ?? l.vehicleId}</td>
+                      <td style={{ padding: '1rem', color: 'var(--text-main)' }}>{l.description}</td>
+                      <td style={{ padding: '1rem', color: 'var(--color-danger)' }}>{l.cost ? Number(l.cost).toLocaleString() : '—'}</td>
+                      <td style={{ padding: '1rem' }}>
+                        <span style={{ 
+                          padding: '0.25rem 0.75rem', borderRadius: '4px', 
+                          background: `rgba(${l.status === 'OPEN' ? '255, 184, 0' : '0, 255, 102'}, 0.1)`,
+                          color: getStatusColor(l.status), fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase'
+                        }}>
+                          {l.status === 'OPEN' ? 'In Shop' : 'Completed'}
+                        </span>
+                      </td>
+                      {isManager && (
+                        <td style={{ padding: '1rem' }}>
+                          {l.status === 'OPEN' && (
+                            <button onClick={() => closeLog(l)} style={{ background: 'transparent', border: 'none', color: 'var(--color-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', fontWeight: 600, textTransform: 'uppercase' }}>
+                              <CheckCircle size={14}/> Close
+                            </button>
+                          )}
+                        </td>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
   );
 }
