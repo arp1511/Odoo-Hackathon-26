@@ -50,26 +50,26 @@ public class TripController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    @PreAuthorize("hasAuthority('DISPATCHER')")
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'FLEET_MANAGER')")
     public TripDto createTrip(@Valid @RequestBody TripCreateDto dto, Authentication authentication) {
         String userEmail = authentication.getName();
         return tripService.createTrip(dto, userEmail);
     }
 
     @PostMapping("/{id}/dispatch")
-    @PreAuthorize("hasAuthority('DISPATCHER')")
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'FLEET_MANAGER')")
     public TripDto dispatchTrip(@PathVariable UUID id) {
         return tripService.dispatchTrip(id);
     }
 
     @PostMapping("/{id}/complete")
-    @PreAuthorize("hasAuthority('DISPATCHER')")
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'FLEET_MANAGER')")
     public TripDto completeTrip(@PathVariable UUID id, @Valid @RequestBody TripCompleteDto dto) {
         return tripService.completeTrip(id, dto);
     }
 
     @PostMapping("/{id}/cancel")
-    @PreAuthorize("hasAuthority('DISPATCHER')")
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'FLEET_MANAGER')")
     public TripDto cancelTrip(@PathVariable UUID id) {
         return tripService.cancelTrip(id);
     }

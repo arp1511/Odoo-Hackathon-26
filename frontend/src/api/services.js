@@ -9,6 +9,9 @@ export const authApi = {
 
   me: () =>
     api.get('/api/auth/me'),
+
+  updateProfile: (data) =>
+    api.put('/api/auth/profile', data),
 };
 
 export const dashboardApi = {

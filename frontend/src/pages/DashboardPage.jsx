@@ -16,6 +16,64 @@ const KPI_DEFS = [
   { key: 'fleetUtilizationPercent', label: 'Fleet Utilization',  icon: '📊', color: '#e8990a', pct: true },
 ];
 
+const KpiCard = ({ item, kpis }) => {
+  const [transform, setTransform] = useState('');
+  const [spotlight, setSpotlight] = useState({ x: 0, y: 0, opacity: 0 });
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    // Calculate 3D tilt
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    const rotateX = ((y - centerY) / centerY) * -10; // Max 10 deg
+    const rotateY = ((x - centerX) / centerX) * 10;
+    
+    setTransform(`perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`);
+    setSpotlight({ x, y, opacity: 1 });
+  };
+
+  const handleMouseLeave = () => {
+    setTransform('perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)');
+    setSpotlight({ ...spotlight, opacity: 0 });
+  };
+
+  return (
+    <div 
+      className="kpi-card interactive-card" 
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
+      style={{ transform, transition: transform.includes('rotateX(0deg)') ? 'transform 0.5s ease' : 'transform 0.1s ease' }}
+    >
+      {/* Spotlight Glow */}
+      <div 
+        className="spotlight" 
+        style={{
+          background: `radial-gradient(600px circle at ${spotlight.x}px ${spotlight.y}px, rgba(0, 240, 255, 0.15), transparent 40%)`,
+          opacity: spotlight.opacity,
+          position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+          pointerEvents: 'none', transition: 'opacity 0.3s ease', zIndex: 0
+        }} 
+      />
+      
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        <div className="kpi-label">{item.label}</div>
+        <div className="kpi-value" style={{ color: item.color }}>
+          {kpis?.[item.key] !== undefined
+            ? item.pct
+              ? `${Number(kpis[item.key]).toFixed(1)}%`
+              : kpis[item.key]
+            : '—'}
+        </div>
+        <div className="kpi-sub" style={{ fontSize: 18 }}>{item.icon}</div>
+      </div>
+    </div>
+  );
+};
+
+
 export default function DashboardPage() {
   const [kpis, setKpis] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -52,19 +110,9 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* KPI Cards */}
-            <div className="kpi-grid" style={{ marginBottom: 24 }}>
-              {KPI_DEFS.map(({ key, label, icon, color, pct }) => (
-                <div className="kpi-card" key={key}>
-                  <div className="kpi-label">{label}</div>
-                  <div className="kpi-value" style={{ color }}>
-                    {kpis?.[key] !== undefined
-                      ? pct
-                        ? `${Number(kpis[key]).toFixed(1)}%`
-                        : kpis[key]
-                      : '—'}
-                  </div>
-                  <div className="kpi-sub" style={{ fontSize: 18 }}>{icon}</div>
-                </div>
+            <div className="kpi-grid" style={{ marginBottom: 24, perspective: '1000px' }}>
+              {KPI_DEFS.map((item) => (
+                <KpiCard key={item.key} item={item} kpis={kpis} />
               ))}
             </div>
 
@@ -79,8 +127,9 @@ export default function DashboardPage() {
                     <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} axisLine={false} tickLine={false} allowDecimals={false} />
                     <Tooltip
-                      contentStyle={{ background: '#1e1e1e', border: '1px solid #2e2e2e', borderRadius: 8, fontSize: 12 }}
-                      cursor={{ fill: 'rgba(255,255,255,.04)' }}
+                      contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: 8, fontSize: 12, color: 'var(--text-main)' }}
+                      itemStyle={{ color: 'var(--text-main)' }}
+                      cursor={{ fill: 'var(--bg-grid)' }}
                     />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                       {chartData.map((d, i) => <Cell key={i} fill={d.fill} />)}
@@ -113,18 +162,18 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 8 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 16, marginTop: 16, padding: '0 1.5rem 1rem' }}>
                   {[
                     { label: 'Active Vehicles',  val: kpis?.activeVehicles, color: '#3b82f6' },
                     { label: 'Available Now',    val: kpis?.availableVehicles, color: '#22c55e' },
                     { label: 'In Maintenance',   val: kpis?.vehiclesInMaintenance, color: '#f59e0b' },
                   ].map(({ label, val, color }) => (
                     <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                        <div style={{ width: 8, height: 8, borderRadius: '50%', background: color }} />
-                        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{label}</span>
+                      <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                        <div style={{ width: 10, height: 10, borderRadius: '50%', background: color }} />
+                        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{label}</span>
                       </div>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{val ?? '—'}</span>
+                      <span style={{ fontSize: 15, fontWeight: 600, color: 'var(--text-primary)' }}>{val ?? '—'}</span>
                     </div>
                   ))}
                 </div>

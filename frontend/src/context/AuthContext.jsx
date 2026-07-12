@@ -8,6 +8,14 @@ export const useAuth = () => useContext(AuthContext);
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState(localStorage.getItem('transitops_theme') || 'dark');
+
+  // Apply theme to document
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('transitops_theme', theme);
+  }, [theme]);
+
 
   // Initialize auth state on load
   useEffect(() => {
@@ -41,10 +49,18 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
   
+  const updateUser = (data) => {
+    setUser({ ...user, ...data });
+  };
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
+
   const hasRole = (...roles) => roles.includes(user?.role);
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading, hasRole }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, theme, toggleTheme, loading, hasRole }}>
       {!loading && children}
     </AuthContext.Provider>
   );

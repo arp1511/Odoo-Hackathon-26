@@ -54,7 +54,7 @@ public class DriverController {
     }
 
     @GetMapping("/available")
-    @PreAuthorize("hasAuthority('DISPATCHER')")
+    @PreAuthorize("hasAnyAuthority('DISPATCHER', 'FLEET_MANAGER')")
     public List<DriverAvailableDto> getAvailableDrivers() {
         return driverService.getAvailableDrivers();
     }

@@ -75,7 +75,7 @@ export default function ReportsPage() {
             <CartesianGrid strokeDasharray="3 3" stroke="#2e2e2e" />
             <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 11 }} />
             <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} label={{ value: 'km/L', angle: -90, position: 'insideLeft', fill: '#6b7280', fontSize: 11 }} />
-            <Tooltip contentStyle={{ background: '#1e1e1e', border: '1px solid #2e2e2e', borderRadius: 8, fontSize: 12 }} />
+            <Tooltip contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: 8, fontSize: 12, color: 'var(--text-main)' }} itemStyle={{ color: 'var(--text-main)' }} cursor={{ fill: 'var(--bg-grid)' }} />
             <Bar dataKey="efficiency" radius={[4,4,0,0]}>
               {chartD.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
             </Bar>
@@ -96,7 +96,7 @@ export default function ReportsPage() {
             <CartesianGrid strokeDasharray="3 3" stroke="#2e2e2e" />
             <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 11 }} />
             <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} />
-            <Tooltip contentStyle={{ background: '#1e1e1e', border: '1px solid #2e2e2e', borderRadius: 8, fontSize: 12 }}
+            <Tooltip contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: 8, fontSize: 12, color: 'var(--text-main)' }} itemStyle={{ color: 'var(--text-main)' }} cursor={{ fill: 'var(--bg-grid)' }}
               formatter={(v) => `₹${Number(v).toLocaleString()}`} />
             <Legend wrapperStyle={{ fontSize: 12, color: '#9a9a9a' }} />
             <Bar dataKey="maintenance" name="Maintenance" fill="#f59e0b" radius={[4,4,0,0]} />
@@ -117,7 +117,7 @@ export default function ReportsPage() {
             <CartesianGrid strokeDasharray="3 3" stroke="#2e2e2e" />
             <XAxis dataKey="name" tick={{ fill: '#6b7280', fontSize: 11 }} />
             <YAxis tick={{ fill: '#6b7280', fontSize: 11 }} />
-            <Tooltip contentStyle={{ background: '#1e1e1e', border: '1px solid #2e2e2e', borderRadius: 8, fontSize: 12 }} />
+            <Tooltip contentStyle={{ background: 'var(--bg-panel)', border: '1px solid var(--border-light)', borderRadius: 8, fontSize: 12, color: 'var(--text-main)' }} itemStyle={{ color: 'var(--text-main)' }} cursor={{ fill: 'var(--bg-grid)' }} />
             <Bar dataKey="roi" name="ROI" radius={[4,4,0,0]}>
               {chartD.map((d, i) => <Cell key={i} fill={Number(d.roi) >= 0 ? '#22c55e' : '#ef4444'} />)}
             </Bar>
